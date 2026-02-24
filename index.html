@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة الناصر 2026</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Tajawal&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+    @keyframes loading {
+    0% { width: 0; }
+    100% { width: 100%; }
+}
+
+#splash_screen.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+/* تنسيق الشاشة المنبثقة */
+.modal-overlay {
+    display: none; 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9); 
+    z-index: 99999; 
+    overflow-y: auto; 
+}
+
+/* تنسيق ورقة A4 */
+.a4-paper {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    background: white;
+    padding: 15mm;
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* إعدادات الطباعة الشاملة */
+@media print {
+    /* إخفاء كل شيء ما عدا محتوى الطباعة */
+    body * {
+        visibility: hidden;
+    }
+    
+    #search_result_modal, #search_result_modal * {
+        visibility: visible;
+    }
+
+    #search_result_modal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: block !important;
+        background: white;
+        overflow: visible !important;
+    }
+
+    .a4-paper {
+        margin: 0 !important;
+        padding: 10mm !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        overflow: visible !important;
+        display: block !important;
+    }
+
+    .no-print, button, .btn-nav {
+        display: none !important;
+    }
+
+    /* كسر الصفحة تلقائياً عند امتلاء الورقة */
+    table {
+        page-break-inside: auto;
+    }
+    tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
+    }
+    
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+}
+
+/* تعديل خاص للطباعة الفعلية */
+/* إضافات لتحسين تجربة الموبايل */
+@media screen and (max-width: 600px) {
+    .a4-paper {
+        padding: 5mm;
+    }
+    .a4-paper h2 {
+        font-size: 14px !important;
+    }
+    .a4-paper p {
+        font-size: 10px !important;
+    }
+}
+
+
+/* جعل الجدول مرن داخل الورقة */
+#p_sessions_body td {
+    word-break: break-word;
+    font-size: 12px;
+}
+
+/* تأثير عند مرور الماوس على الزر */
+.btn-nav:hover i {
+    transform: scale(1.2) rotate(-10deg); /* تكبير الأيقونة ولفها قليلاً */
+    color: var(--primary); /* تغيير لون الأيقونة في الوضع النهاري */
+}
+
+/* تأثير خاص للوضع الليلي */
+body.dark-mode .btn-nav:hover i {
+    color: #fff;
+    text-shadow: 0 0 8px var(--accent);
+}
+
+/* حركة نبض خفيفة لأيقونة "تقديم شكوى" */
+.btn-shakwa i {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+body.dark-mode .page, 
+body.dark-mode .login-card, 
+body.dark-mode nav,
+body.dark-mode .case-card-luxury {
+    background-color: #16213e !important;
+    color: #ffffff;
+    border-color: #0f3460;
+}
+
+body.dark-mode input, 
+body.dark-mode select, 
+body.dark-mode textarea {
+    background-color: #0f3460;
+    color: white;
+    border: 1px solid #1a1a2e;
+}
+
+body.dark-mode th {
+    background: #0f3460;
+    color: #c29751;
+}
+
+body.dark-mode td {
+    border-color: #1a1a2e;
+}
+        :root { --primary: #0d1b2a; --accent: #c29751; --bg: #f4f4f9; --white: #ffffff; }
+        body { font-family: 'Tajawal', sans-serif; background-color: var(--bg); margin: 0; color: var(--primary); }
+        .btn-shakwa { display: inline-block; background-color: #e63946; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9rem; margin-top: 10px; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transition: 0.3s; }
+        .btn-shakwa:hover { background-color: #c0392b; transform: scale(1.05); }
+        #status_indicator { position: fixed; top: 18px; right: 15px; width: 15px; height: 15px; border-radius: 50%; z-index: 10000; border: 2px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.3); background-color: #7f8c8d !important; }
+        #status_indicator.online { background-color: #2ecc71 !important; box-shadow: 0 0 10px #2ecc71 !important; }
+        #status_indicator.offline { background-color: #e63946 !important; box-shadow: 0 0 10px #e63946 !important; }
+        #login_screen { height: 100vh; background: linear-gradient(rgba(13, 27, 42, 0.95), rgba(13, 27, 42, 0.95)), url('https://www.transparenttextures.com/patterns/black-paper.png'); display: flex; justify-content: center; align-items: center; position: fixed; width: 100%; z-index: 2000; top:0; right:0; }
+        .login-card { background: white; padding: 40px; border-radius: 15px; border: 3px solid var(--accent); text-align: center; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        header { background: var(--primary); color: white; padding: 15px 45px 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--accent); }
+        nav { background: #fff; padding: 10px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn-nav { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s; }
+        .btn-nav:hover { background: var(--accent); color: #000; }
+        .container { max-width: 1200px; margin: 20px auto; padding: 0 15px; }
+        .page { display: none; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); position: relative; }
+        .active-page { display: block; animation: fadeIn 0.4s; }
+        .page-title-badge { background: var(--accent); color: #000; padding: 5px 15px; border-radius: 0 0 10px 10px; font-weight: bold; font-size: 1.2rem; position: absolute; top: 0; left: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-family: 'Tajawal'; font-size: 1rem; }
+        .btn-action { background: var(--accent); color: #000; border: none; padding: 15px; font-size: 1.2rem; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 20px; transition: 0.3s; }
+    
+        .btn-action:hover { opacity: 0.9; transform: scale(0.98); }
+    .btn-nav:active, .btn-action:active {
+    transform: translateY(2px);
+    filter: brightness(0.8);
+}
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #eee; padding: 12px; text-align: center; }
+        th { background: var(--primary); color: white; }
+        .case-card-luxury { background: white; border-radius: 12px; border-right: 6px solid var(--accent); box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; padding: 20px; transition: 0.3s; position: relative; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media print {
+    /* إخفاء كل شيء في الصفحة */
+    body * { visibility: hidden; }
+    /* إظهار ورقة النتائج فقط ومحتوياتها */
+    #search_result_modal, #search_result_modal * { visibility: visible; }
+    #search_result_modal { position: absolute; left: 0; top: 0; width: 100%; background: white; }
+    /* إخفاء أزرار الإغلاق والطباعة أثناء الطباعة الفعلية */
+    .no-0 { display: none !important; }
+}
+       </style>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/ar.js'></script>
+</head>
+
+<body>
+    <div id="splash_screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: #0d1b2a; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999;">
+    <i class="fas fa-balance-scale" style="font-size: 80px; color: #c29751; margin-bottom: 20px; animation: pulse 1.5s infinite;"></i>
+    <h1 style="color: white; font-family: 'Amiri', serif;">منظومة الناصر لإدارة قضايا الجنايات</h1>
+    <div style="width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-top: 20px; overflow: hidden;">
+        <div style="width: 50%; height: 100%; background: var(--accent); animation: loading 2s linear forwards;"></div>
+    </div>
+</div>
+
+    <div id="status_indicator" title="حالة الاتصال بالإنترنت"></div>
+    
+<div id="login_screen" style="direction: rtl; text-align: center; background-color: #f4f7f6; height: 100vh; display: flex; align-items: center; justify-content: center;">
+    <div style="background: white; width: 90%; max-width: 400px; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 5px solid var(--primary);">
+        
+        <h1 style="font-family: 'Amiri', serif; color: var(--primary); margin-bottom: 10px;">منظومة الناصر 2026</h1>
+        <p style="color: #666; margin-bottom: 30px;">برجاء تسجيل الدخول للمتابعة</p>
+
+        <div style="text-align: right; margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">اسم المستخدم:</label>
+            <input type="text" id="user_name" placeholder="أدخل اسمك" 
+                   style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline: none; transition: 0.3s;">
+        </div>
+
+        <div style="text-align: right; margin-bottom: 25px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">كلمة السر:</label>
+            <input type="password" id="pass_code" placeholder="••••••••" 
+                   style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; outline: none;">
+        </div>
+
+        <button onclick="login()" 
+                style="width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s;">
+            دخول للمنظومة
+        </button>
+
+    </div>
+</div>
+
+
+<div id="app_content" style="display: none;">
+
+        <header>
+            <h3 style="margin:0; font-family: 'Amiri'">⚖️ منظومة مكتب الناصر لإدارة قضايا ااجنايات</h3>
+            <div id="top-datetime-bar" style="display: inline-block; padding: 5px 15px; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 0.9rem; color: #fff; border: 1px solid rgba(255,255,255,0.2);">
+                <span id="header_date"></span>
+            </div>
+            <a href="https://www.shakwa.eg/GCP/Default.aspx" target="_blank" class="btn-shakwa no-print">⚠️ تقديم شكوى</a>
+            <button class="btn-nav" onclick="logout()" style="background-color: #e63946;">
+    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+</button>
+
+        </header>
+
+<nav class="no-print">
+    
+    <button class="btn-nav" onclick="showPage('main_dashboard')"><i class="fas fa-home"></i> الرئيسية</button>
+    <button class="btn-nav" onclick="showPage('calendar_page'); renderCalendar();"><i class="fas fa-calendar-alt"></i> الأجندة</button>
+    <button class="btn-nav" onclick="showPage('def_page')"><i class="fas fa-users"></i> الموكلين</button>
+    <button class="btn-nav" onclick="showPage('case_page')"><i class="fas fa-folder-plus"></i> قيد قضية</button>
+    <button class="btn-nav" onclick="showAllCasesPage()"><i class="fas fa-book"></i> سجل القضايا</button>
+    <button class="btn-nav" onclick="showPage('search_page')"><i class="fas fa-search"></i> بحث</button>
+    
+    <button id="admin_btn" class="btn-nav" onclick="showPage('staff_management')" style="background-color: #2c3e50; display: none;">
+        <i class="fas fa-user-shield"></i> إدارة الموظفين
+    </button>
+    
+    <button class="btn-nav" onclick="showPage('settings_page')"><i class="fas fa-cog"></i> الإعدادات</button>
+    <button class="btn-nav" onclick="toggleDarkMode()" id="dark_mode_btn"><i class="fas fa-moon"></i> الوضع الليلي</button>
+</nav>
+
+        <div style="text-align: center; margin-top: 10px;" class="no-print">
+            <button onclick="syncEverything()" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);">
+                ☁️ مزامنة وحفظ البيانات
+            </button>
+        </div>
+
+        <div class="container">
+<div id="main_dashboard" class="page active-page">
+    <div style="text-align: center; padding: 20px;">
+        <h1 style="font-family: 'Amiri', serif; color: var(--primary); margin-bottom: 5px;">مرحباً بك في منظومة الناصر 2026</h1>
+        <p style="color: var(--accent); font-weight: bold; margin-top: 0;">المحامي بالنقض والادارية والدستورية العليا</p>
+    </div>
+
+<div class="dashboard-grid" style="display: flex; flex-direction: column; gap: 20px; margin-top: 20px;">
+        <div style="background: #fff; border: 2px solid var(--primary); border-radius: 12px; padding: 15px;">
+            <h3 style="background: var(--primary); color: white; margin: -15px -15px 15px -15px; padding: 10px; border-radius: 10px 10px 0 0; text-align: center;">📅 جلسات اليوم</h3>
+            <div id="today_sessions_list" style="max-height: 400px; overflow-y: auto;">
+                </div>
+        </div>
+
+        <div style="background: #fff; border: 2px solid var(--accent); border-radius: 12px; padding: 15px;">
+            <h3 style="background: var(--accent); color: #000; margin: -15px -15px 15px -15px; padding: 10px; border-radius: 10px 10px 0 0; text-align: center;">🌅 جلسات الغد</h3>
+            <div id="tomorrow_sessions_list" style="max-height: 400px; overflow-y: auto;">
+                </div>
+        </div>
+    </div>
+</div>
+
+<div id="calendar_page" class="page">
+    <div class="page-title-badge">أجندة الجلسات</div>
+    <h3>📅 جدول توزيع الجلسات الشهري</h3>
+    <div id='calendar_container' style="margin-top: 20px; background: white; padding: 10px; border-radius: 8px;"></div>
+</div>
+
+            <div id="all_cases_page" class="page">
+                <div class="page-title-badge">سجل القضايا</div>
+                <h3>📚 أرشيف كافة القضايا</h3>
+                <div style="margin-bottom: 20px;">
+        <input type="text" id="case_search_input" placeholder="🔍 ابحث باسم المتهم أو الموكل..." 
+               onkeyup="filterCasesByName()" 
+               style="border: 2px solid var(--accent); padding: 15px; border-radius: 10px;">
+    </div>
+                <div id="all_cases_list"></div>
+            </div>
+
+            <div id="def_page" class="page">
+                <div class="page-title-badge">بيانات الموكلين</div>
+                <h3>👤 إضافة/تعديل موكل</h3>
+                <div class="form-grid">
+                    <input type="text" id="d_name" placeholder="الاسم الكامل">
+                    <input type="text" id="d_id" placeholder="الرقم القومي">
+                    <input type="text" id="d_phone" placeholder="رقم التليفون">
+                </div>
+                <button class="btn-action" onclick="saveDefendant()">حفظ بيانات الموكل</button>
+                <hr>
+                <h3>📋 قائمة الموكلين المسجلين</h3>
+                <div id="def_list_table"></div>
+            </div>
+
+            <div id="case_page" class="page">
+                <div class="page-title-badge">تسجيل القضايا</div>
+                <h3>📂 تسجيل قضية جديدة</h3>
+                <div class="form-grid">
+                    <input type="text" id="c_num" placeholder="رقم القضية">
+                    <select id="c_year"></select>
+                    <select id="c_type"></select>
+                    <select id="c_station"></select>
+                    <div style="grid-column: span 2;">
+                        <label>👤 الموكلين (Ctrl للاختيار المتعدد):</label>
+                        <select id="c_def_list" multiple style="height: 120px; border: 2px solid var(--accent);"></select>
+                    </div>
+                    <div style="grid-column: span 2;"><input type="text" id="c_opponent" placeholder="اسم الخصم"></div>
+                    <div style="grid-column: span 2;"><textarea id="c_charge" placeholder="موضوع القضية / التهمة" rows="2"></textarea></div>
+                </div>
+<button class="btn-action" onclick="saveCase()">
+   <i class="fas fa-save"></i> تسجيل القضية الآن
+</button>
+
+
+            </div>
+
+<div id="search_page" class="page">
+    <div class="page-title-badge">البحث والتحري</div>
+    <h3>🔍 البحث الدقيق بالخانات الأربعة</h3>
+    <div class="form-grid">
+        <input type="text" id="s_num" placeholder="رقم القضية">
+        <select id="s_year"><option value="">-- اختر السنة --</option></select>
+        <select id="s_type"><option value="">-- اختر النوع --</option></select>
+        <select id="s_station"><option value="">-- اختر القسم/المركز --</option></select>
+    </div>
+    <button class="btn-action" onclick="advancedSearch()">بدء البحث</button>
+    <div id="search_results" style="margin-top:20px;"></div>
+</div>
+
+<div id="staff_management" class="page">
+    <div class="page-title-badge">إدارة الموظفين</div>
+    <h2 style="text-align: center; color: var(--primary);">👥 إدارة طاقم المكتب والصلاحيات</h2>
+    <div style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd; direction: rtl;">
+        <h3>➕ إضافة مساعد جديد</h3>
+        <input type="text" id="new_staff_name" placeholder="اسم المستخدم" style="margin-bottom: 10px;">
+        <input type="password" id="new_staff_pass" placeholder="كلمة السر" style="margin-bottom: 10px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin: 10px 0;">
+            <label><input type="checkbox" id="p_view_cases"> رؤية القضايا</label>
+            <label><input type="checkbox" id="p_add_cases"> إضافة قضايا</label>
+        </div>
+        <button onclick="addNewStaff()" class="btn-action">حفظ المساعد الجديد</button>
+    </div>
+    <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;">
+        <thead style="background: var(--primary); color: white;">
+            <tr><th>الاسم</th><th>الصلاحيات</th><th>إجراءات</th></tr>
+        </thead>
+        <tbody id="staff_table_body"></tbody>
+    </table>
+</div>
+
+
+            <div id="file_page" class="page">
+                <div class="page-title-badge">ملف القضية المطور</div>
+                <div id="file_info_header"></div>
+                <div class="form-grid" style="background:#fff; padding:15px; border:1px dashed var(--accent);">
+                    <input type="text" id="c_total_num" placeholder="رقم كلي / إستئنافي القضية">
+                    <input type="text" id="prosecutorName" placeholder="اسم وكيل النيابة">
+                    <input type="text" id="attorney_at_investigation" placeholder="المحامي حاضر التحقيق">
+                    <textarea id="c_notes" placeholder="ملاحظات خاصة بالقضية..." rows="2" style="grid-column: span 2;"></textarea>
+                </div>
+                
+                <div style="margin-top:15px; background:#f1f1f1; padding:15px; border-radius:8px;">
+                    <label>📦 عدد الأحراز:</label>
+                    <select id="evidence_count" onchange="generateEvidenceInputs()">
+                        <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                    </select>
+                    <div id="evidence_fields_container" style="margin-top:10px;"></div>
+                </div>
+
+                <div style="margin-top:15px; background:#eef2f7; padding:15px; border:1px solid var(--accent);">
+                    <label>📄 المرفقات (PDF/Images):</label>
+                    <input type="file" id="c_pdf_attachment" accept="application/pdf,image/*">
+                    <button onclick="uploadPDFAction()" style="padding:10px; background:var(--primary); color:white; border:none; cursor:pointer;">رفع الملف</button>
+                    <table id="pdf_table" style="display:none; margin-top:10px;">
+                        <thead><tr style="background:#ddd;"><th>الملف</th><th>التاريخ</th><th>الإجراء</th></tr></thead>
+                        <tbody id="pdf_links_container"></tbody>
+                    </table>
+                </div>
+
+<button class="btn-action" onclick="saveExtraCaseData()" 
+        style="background: linear-gradient(45deg, #27ae60, #2ecc71); 
+               color: white; 
+               border: none; 
+               box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); 
+               display: flex; 
+               align-items: center; 
+               justify-content: center; 
+               gap: 10px; 
+               border-radius: 8px;
+               transition: all 0.3s ease;">
+    <i class="fas fa-save" style="font-size: 1.4rem;"></i>
+    <span style="font-size: 1.2rem;">حفظ بيانات الملف وتحديث الأحراز</span>
+</button>
+
+
+                <div class="no-print" style="margin-top:20px; border:2px solid var(--primary); padding:20px;">
+                    <h4>⚖️ إدارة الجلسات</h4>
+                    <div class="form-grid">
+                        <select id="j_type">
+                            <option value="">-- اختر النوع --</option>
+                                                        <option value="تحقيق نيابة">🔍 تحقيق نيابة</option>
+<option value="تجديد جزئي">🏛️ تجديد جزئي</option>
+<option value="تجديد غرفة ">🏛️ تجديد غرفة </option>
+<option value="إستئناف امر حبس ( متهم ) ">🏛️ إستئناف أمر حبس ( متهم ) </option>
+<option value="استئناف امر حبس ( نيابة ) ">🏛️ استئناف امر حبس ( نيابة ) </option>                            
+<option value="جنايات أول درجة">🏛️ جنايات أول درجة</option>
+<option value="جنايات استئناف">🏛️ جنايات استئناف</option>
+<option value=" اول جلسة (جنح )">🏛️ اول جلسة ( جنح )</option>
+<option value="معارضة ( جنح )">🏛️ معارضة (جنح)</option>
+<option value="استئناف ( جنح )">🏛️ استئناف ( جنح )</option>
+<option value="معارضة استئنافية ( جنح )">🏛️ معارضة إستئنافية ( جنح )</option>
+<option value="نقض">🏛️ نقض</option>
+
+                        </select>
+                        <input type="date" id="j_date">
+                        <input type="text" id="j_circle" placeholder="الدائرة">
+                        <select id="j_res_main" onchange="toggleDecisionDetails()">
+       <option value="">-- القرار --</option>
+      <option value="تأجيل">📅 تأجيل</option>
+     <option value="براءة">⚖️ براءة</option>
+<option value="حبس ٤ يوم">🔒 حبس ٤ يوم </option>
+   <option value="حبس ١٥ يوم">🔒 حبس ١٥ يوم </option>
+ <option value="حبس ٤٥ يوم">🔒 حبس ٤٥ يوم </option>
+      <option value="إخلاء سبيل">⚖️ اخلاء سبيل</option>
+  <option value="حكم">🔒 حكم</option>
+  <option value="قبزل ورفض وتأييد">🔒 قبول ورفض و تأييد</option>
+  <option value="قبول وتعديل">🔒 قبول و تعديل</option>
+  <option value="قبول والغاء">🔒 قبول والغاء</option>
+                        </select>
+                        <input type="date" id="j_next" title="الجلسة القادمة">
+                        <textarea id="j_verdict" style="grid-column:span 2; display:none;" placeholder="التفاصيل..."></textarea>
+                    </div>
+                    <button class="btn-action" onclick="addSmartSession()">➕ إضافة الجلسة</button>
+
+                </div>
+                <div id="sessions_table_area"></div>
+            </div>
+
+            <div id="settings_page" class="page">
+                <div class="page-title-badge">الإعدادات</div>
+                <div class="settings-card" style="border:1px solid #ccc; padding:15px; margin-bottom:10px;">
+                    <h4>📅 السنوات القضائية</h4>
+                    <input type="text" id="new_year" placeholder="2027">
+                    <button class="btn-action" onclick="addNewSetting('years', 'new_year')">إضافة سنة</button>
+                </div>
+                <div class="settings-card" style="border:1px solid #ccc; padding:15px; margin-bottom:10px;">
+                    <h4>🏢 الأقسام / المراكز</h4>
+                    <input type="text" id="new_station" placeholder="قسم أول">
+                    <button class="btn-action" onclick="addNewSetting('stations', 'new_station')">إضافة قسم</button>
+                </div>
+                <div class="settings-card" style="border:1px solid #ccc; padding:15px; margin-bottom:10px;">
+                    <h4>⚖️ أنواع القضايا</h4>
+                    <input type="text" id="new_type" placeholder="جنح">
+                    <button class="btn-action" onclick="addNewSetting('types', 'new_type')">إضافة نوع</button>
+                </div>
+                <button onclick="clearAll()" style="background:var(--danger); color:white; width:100%; padding:15px; border:none; border-radius:5px; cursor:pointer;">⚠️ مسح كافة البيانات</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const MASTER_PASS = "1234";
+        let db = { 
+            defs: [], 
+            cases: [], 
+            sets: { stations: ["مركز الباجور", "قسم منوف"], types: ["جنايات", "جنح مستأنف"], years: ["2025", "2026"] } 
+        };
+        let currentCaseIdx = -1;
+        let editDefIdx = -1;
+
+        const firebaseConfig = { databaseURL: "https://nasserlawfirm-f903f-default-rtdb.firebaseio.com/" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const dbRef = firebase.database().ref('nasser_data');
+
+        firebase.database().ref(".info/connected").on("value", (snap) => {
+            const ind = document.getElementById('status_indicator');
+            ind.className = snap.val() ? 'online' : 'offline';
+        });
+
+        dbRef.on('value', (snap) => {
+            if(snap.exists()) {
+                db = snap.val();
+                if(!db.sets) db.sets = { stations: [], types: [], years: [] };
+                fillSelects();
+                renderAllCases();
+                renderDefendants();
+            }
+        });
+
+let currentUser = null; // متغير لحفظ بيانات المستخدم الحالي
+
+// تحديث دالة تسجيل الدخول
+function login() {
+    const userVal = document.getElementById('user_name').value;
+    const passVal = document.getElementById('pass_code').value;
+
+    // 1. دخول المدير
+    if (userVal === "admin" && passVal === "123") {
+        currentUser = { username: "المدير", role: "admin", permissions: ['all'] };
+        document.getElementById('admin_btn').style.display = 'block'; // إظهار زر الإدارة
+        finishLogin("مرحباً سيادة المستشار");
+        return;
+    }
+
+    // 2. دخول المساعدين
+    const staff = (db.users || []).find(u => u.username === userVal && u.password === passVal);
+    if (staff) {
+        currentUser = staff;
+        document.getElementById('admin_btn').style.display = 'none'; // إخفاء زر الإدارة عن المساعد
+        applyPermissions(staff.permissions);
+        finishLogin("مرحباً بك: " + staff.username);
+    } else {
+        alert("بيانات الدخول غير صحيحة!");
+    }
+}
+function updateClock() {
+    const now = new Date();
+    const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true 
+    };
+    
+    // ربط التاريخ بالمعرف header_date الموجود في الـ HTML الخاص بك
+    const dateString = now.toLocaleDateString('ar-EG', options);
+    const element = document.getElementById('header_date');
+    if (element) {
+        element.innerHTML = "📅 " + dateString;
+    }
+}
+
+// تشغيل الساعة كل ثانية واحدة
+setInterval(updateClock, 1000);
+// استدعاء فوري عند تحميل الصفحة
+updateClock();
+function logout() {
+    if (confirm("هل أنت متأكد من تسجيل الخروج؟")) {
+        // 1. مسح بيانات المستخدم الحالي من الذاكرة المؤقتة
+        currentUser = null;
+
+        // 2. إخفاء محتوى التطبيق وإظهار شاشة الدخول
+        document.getElementById('app_content').style.display = 'none';
+        document.getElementById('login_screen').style.display = 'flex';
+
+        // 3. تفريغ خانات كلمة السر لزيادة الأمان
+        document.getElementById('user_name').value = '';
+        document.getElementById('pass_code').value = '';
+
+        // 4. إعادة تعيين واجهة المستخدم (مثل إخفاء زر الإدارة)
+        document.getElementById('admin_btn').style.display = 'none';
+        
+        console.log("تم تسجيل الخروج بنجاح");
+    }
+}
+
+function finishLogin(msg) {
+    alert(msg);
+    document.getElementById('login_screen').style.display = 'none';
+    document.getElementById('app_content').style.display = 'block';
+    updateDashboard();
+    if(currentUser.role === 'admin') renderStaffTable();
+}
+
+// وظيفة لإخفاء الأقسام بناءً على الصلاحيات
+function applyPermissions(user) {
+    const navButtons = document.querySelectorAll('.btn-nav');
+    
+    // إذا كان المستخدم مساعد (Staff)
+    if (user.role === 'staff') {
+        navButtons.forEach(btn => {
+            // إخفاء الإعدادات وإدارة الموظفين عن المساعد تماماً
+            if (btn.innerText.includes('الإعدادات') || btn.innerText.includes('إدارة الموظفين')) {
+                btn.style.display = 'none';
+            }
+        });
+
+        // منع المساعد من رؤية أزرار الحذف داخل صفحات الموكلين والقضايا
+        const deleteButtons = document.querySelectorAll('button[onclick*="delete"]');
+        deleteButtons.forEach(b => b.style.display = 'none');
+    } else {
+        // إذا كان مدير (Admin) إظهار كل شيء
+        navButtons.forEach(btn => btn.style.display = 'block');
+    }
+}
+
+function updateDashboard() {
+    const today = new Date().toISOString().split('T')[0];
+    const tomorrowDate = new Date();
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrow = tomorrowDate.toISOString().split('T')[0];
+
+    // رأس الجدول الجديد ليشمل كافة الخانات المطلوبة
+    const tableHeader = `
+        <table style="font-size: 0.85rem;">
+            <thead>
+                <tr>
+                    <th>القضية</th>
+                    <th>الموكل</th>
+                    <th>نوع الجلسة</th>
+                    <th>الدائرة</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+    let todayHtml = tableHeader;
+    let tomorrowHtml = tableHeader;
+
+    (db.cases || []).forEach(c => {
+        (c.sessions || []).forEach(s => {
+            // صياغة بيانات القضية (رقم - سنة - نوع - جهة) في سطر واحد
+            const caseInfo = `${c.num} لسنة ${c.year} (${c.type} - ${c.station})`;
+            
+            const rowHtml = `
+                <tr>
+                    <td><b style="color:var(--primary)">${caseInfo}</b></td>
+                    <td>${c.def}</td>
+                    <td><span class="badge" style="background:#eef2f7; padding:2px 5px; border-radius:4px;">${s.type || '-'}</span></td>
+                    <td><b style="color:#c0392b">${s.circle || '-'}</b></td>
+                </tr>`;
+
+            if (s.date === today) {
+                todayHtml += rowHtml;
+            }
+            if (s.date === tomorrow) {
+                tomorrowHtml += rowHtml;
+            }
+        });
+    });
+
+    document.getElementById('today_sessions_list').innerHTML = todayHtml + '</tbody></table>';
+    document.getElementById('tomorrow_sessions_list').innerHTML = tomorrowHtml + '</tbody></table>';
+}
+
+
+        function syncEverything() { save(); alert("تمت المزامنة بنجاح"); }
+
+        function showAllCasesPage() { showPage('all_cases_page'); renderAllCases(); }
+        function saveDefendant() {
+            const name = document.getElementById('d_name').value;
+            if(!name) return alert("الاسم مطلوب");
+            const d = { name, id: document.getElementById('d_id').value, phone: document.getElementById('d_phone').value };
+            if(!db.defs) db.defs=[];
+            if(editDefIdx > -1) { db.defs[editDefIdx] = d; editDefIdx = -1; }
+            else { db.defs.push(d); }
+            save(); renderDefendants(); fillSelects();
+            document.getElementById('d_name').value = ''; document.getElementById('d_id').value = ''; document.getElementById('d_phone').value = '';
+        }
+
+        function renderDefendants() {
+            const area = document.getElementById('def_list_table');
+            if(!area) return;
+            let h = `<table><thead><tr><th>الاسم</th><th>الهاتف</th><th>إجراء</th></tr></thead><tbody>`;
+            (db.defs || []).forEach((d, i) => {
+                h += `<tr><td>${d.name}</td><td>${d.phone}</td><td>
+                    <button onclick="editDefNow(${i})">✏️</button>
+                    <button onclick="deleteDefNow(${i})">🗑️</button>
+                </td></tr>`;
+            });
+            area.innerHTML = h + `</tbody></table>`;
+        }
+
+        function deleteDefNow(i) { if(confirm("هل أنت متأكد من حذف الموكل؟")) { db.defs.splice(i, 1); save(); renderDefendants(); fillSelects(); } }
+        function editDefNow(i) { const d = db.defs[i]; document.getElementById('d_name').value = d.name; document.getElementById('d_phone').value = d.phone; editDefIdx = i; }
+
+    function toggleDecisionDetails() {
+    const resValue = document.getElementById('j_res_main').value;
+    const verdictArea = document.getElementById('j_verdict');
+    // إظهار حقل التفاصيل فقط إذا تم اختيار قرار
+    if (resValue !== "") {
+        verdictArea.style.display = "block";
+    } else {
+        verdictArea.style.display = "none";
+    }
+}
+
+function saveCase() {
+    // 1. جلب القيم من المدخلات
+    const num = document.getElementById('c_num').value.trim();
+    const year = document.getElementById('c_year').value;
+    const type = document.getElementById('c_type').value;
+    const station = document.getElementById('c_station').value;
+    const opponent = document.getElementById('c_opponent').value.trim();
+    const charge = document.getElementById('c_charge').value.trim();
+
+    // 2. معالجة اختيار الموكلين المتعدد
+    const defSelect = document.getElementById('c_def_list');
+    const selectedDefs = Array.from(defSelect.selectedOptions).map(option => option.value);
+
+    // 3. التحقق من البيانات الأساسية
+    if(!num || !year || !type || !station || selectedDefs.length === 0) {
+        alert("يا مستشار، برجاء إكمال البيانات الأساسية واختيار الموكل أولاً");
+        return;
+    }
+
+    // 4. التأكد من عدم تكرار القضية
+    if (!db.cases) db.cases = [];
+    const isDuplicate = db.cases.some(c => c.num === num && c.year === year && c.type === type && c.station === station);
+    if(isDuplicate) {
+        alert("هذه القضية مسجلة بالفعل!");
+        return;
+    }
+
+    // 5. بناء كائن القضية بالكامل
+    const caseData = {
+        num: num,
+        year: year,
+        type: type,
+        station: station,
+        def: selectedDefs.join(' - '), // تحويل المصفوفة لنص للعرض
+        opponent: opponent,
+        charge: charge,
+        totalNum: "", 
+        notes: "",    
+        prosecutorName: "",             
+        attorney_at_investigation: "",  
+        evidences: [], // مصفوفة فارغة جاهزة للاستخدام لاحقاً                 
+        sessions: [],
+        attachments: []
+    };
+
+    // 6. الحفظ والتنظيف
+    db.cases.push(caseData);
+    save(); 
+    alert("✅ تم تسجيل القضية بنجاح");
+    
+    // تفريغ الخانات بعد النجاح
+    document.getElementById('c_num').value = '';
+    document.getElementById('c_opponent').value = '';
+    document.getElementById('c_charge').value = '';
+    defSelect.selectedIndex = -1; // إلغاء تحديد الموكلين
+    
+    showAllCasesPage();
+}
+
+function renderAllCases() {
+    let h = '';
+    (db.cases || []).forEach((c, i) => {
+        // أضفنا هنا data-search لكي نحصر البحث فيها
+        h += `<div class="case-card-luxury" data-search="${c.def} ${c.num}">
+            <h4>⚖️ قضية رقم ${c.num} لسنة ${c.year} - ${c.type}</h4>
+            <p>الموكل: ${c.def}</p>
+            <button onclick="openFile(${i})">📂 فتح ملف القضية</button>
+            <button onclick="deleteCase(${i})" style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">🗑️ حذف</button>
+        </div>`;
+    });
+    document.getElementById('all_cases_list').innerHTML = h || "لا يوجد قضايا مسجلة";
+}
+
+        function deleteCase(i) { if(confirm("هل تريد حذف ملف القضية نهائياً؟")) { db.cases.splice(i,1); save(); renderAllCases(); } }
+
+        function openFile(i) {
+            currentCaseIdx = i; const c = db.cases[i]; showPage('file_page');
+            document.getElementById('file_info_header').innerHTML =
+            `
+ <h2>⚖️ قضية رقم ${c.num} لسنة ${c.year} (${c.type} - ${c.station})</h2>
+        <p><b>الموكلين:</b> ${c.def}</p>
+    `;
+            document.getElementById('c_total_num').value = c.totalNum || '';
+            document.getElementById('c_notes').value = c.notes || '';
+            renderSessions(); renderPDFFiles();
+// البحث عن الأحراز المحفوظة وعرضها
+const evidenceCont = document.getElementById('evidence_fields_container');
+const evidenceCountSelector = document.getElementById('evidence_count');
+
+if (c.evidences && c.evidences.length > 0) {
+    evidenceCountSelector.value = c.evidences.length; // ضبط العدد المختار
+    evidenceCont.innerHTML = ''; 
+    c.evidences.forEach((ev, index) => {
+        evidenceCont.innerHTML += `<input type="text" class="evidence-input" value="${ev.content}" placeholder="محتوى الحرز رقم ${index + 1}" style="margin-bottom:5px;">`;
+    });
+} else {
+    evidenceCountSelector.value = "0";
+    evidenceCont.innerHTML = '';
+}
+   }
+
+function saveExtraCaseData() {
+    if (currentCaseIdx === -1) return;
+    
+    const c = db.cases[currentCaseIdx];
+    c.totalNum = document.getElementById('c_total_num').value;
+    c.notes = document.getElementById('c_notes').value;
+       c.prosecutorName = document.getElementById('prosecutorName').value; 
+    c.attorney_at_investigation = document.getElementById('attorney_at_investigation').value;
+    // جلب قيم الأحراز من الخانات المولدة
+    const inputs = document.querySelectorAll('.evidence-input');
+    c.evidences = []; // إعادة تعيين المصفوفة لتحديثها
+    inputs.forEach(input => {
+        if(input.value.trim() !== "") {
+            c.evidences.push({ content: input.value.trim() });
+        }
+    });
+
+    save(); // حفظ في Firebase و LocalStorage
+    alert("✅ تم حفظ تحديثات ملف القضية والأحراز بنجاح");
+}
+
+        function addSmartSession() {
+    // التأكد من اختيار قضية
+    if (currentCaseIdx === -1) {
+        alert("يا مستشار، لازم تفتح ملف قضية الأول عشان نضيف الجلسة فيه!");
+        return;
+    }
+
+    const jType = document.getElementById('j_type').value;
+    const jDate = document.getElementById('j_date').value;
+    const jCircle = document.getElementById('j_circle').value;
+    const jRes = document.getElementById('j_res_main').value;
+    const jNext = document.getElementById('j_next').value;
+    const jVerdict = document.getElementById('j_verdict').value;
+
+    // التحقق من البيانات الأساسية
+    if (!jDate || !jType) {
+        alert("برجاء اختيار تاريخ الجلسة ونوعها!");
+        return;
+    }
+
+    // التأكد من أن مصفوفة الجلسات موجودة في ملف القضية
+    if (!db.cases[currentCaseIdx].sessions) {
+        db.cases[currentCaseIdx].sessions = [];
+    }
+
+    // إضافة الجلسة للمصفوفة
+    const newSession = {
+        type: jType,
+        date: jDate,
+        circle: jCircle,
+        res: jRes,
+        next: jNext,
+        verdict: jVerdict
+    };
+
+    db.cases[currentCaseIdx].sessions.push(newSession);
+
+    // تنفيذ الحفظ الفعلي
+    save();
+
+    // تحديث الجدول وتنظيف الخانات
+    renderSessions();
+    alert("✅ تم حفظ الجلسة بنجاح");
+    
+    // مسح البيانات من الخانات لتسهيل الإضافة التالية
+    document.getElementById('j_date').value = "";
+    document.getElementById('j_circle').value = "";
+    document.getElementById('j_verdict').value = "";
+}
+
+
+        function renderSessions() {
+    const sessions = db.cases[currentCaseIdx].sessions || [];
+    let h = `<table>
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>النوع</th>
+                        <th>القرار</th>
+                        <th>القادمة</th>
+                        <th>إجراء</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    sessions.forEach((s, index) => {
+        h += `<tr>
+                <td>${s.date || '-'}</td>
+                <td>${s.type || '-'}</td>
+                <td>${s.res || '-'}</td>
+                <td>${s.next || '-'}</td>
+                <td>
+                            <button onclick="editSession(${index})" style="background:#2980b9; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-left:5px;">
+                        <i class="fas fa-edit"></i> تعديل
+                    </button>
+                    <button onclick="deleteSession(${index})" style="background:#e63946; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                        <i class="fas fa-trash"></i> حذف
+                    </button>
+                </td>
+            </tr>`;
+    });
+    
+    document.getElementById('sessions_table_area').innerHTML = h + `</tbody></table>`;
+}
+function editSession(index) {
+    const session = db.cases[currentCaseIdx].sessions[index];
+    
+    // 1. استرجاع البيانات للخانات مرة أخرى لتعديلها
+    document.getElementById('j_type').value = session.type || "";
+    document.getElementById('j_date').value = session.date || "";
+    document.getElementById('j_circle').value = session.circle || "";
+    document.getElementById('j_res_main').value = session.res || "";
+    document.getElementById('j_next').value = session.next || "";
+    document.getElementById('j_verdict').value = session.verdict || "";
+    
+    // إظهار حقل التفاصيل إذا كان هناك نص قديم
+    if(session.verdict) {
+        document.getElementById('j_verdict').style.display = "block";
+    }
+
+    // 2. حذف الجلسة القديمة مؤقتاً لحين حفظ التعديل
+    // أو يمكنك تنبيه المستخدم أنه "جارٍ التعديل"
+    if(confirm("سيتم استرجاع بيانات الجلسة للخانات بالأعلى لتعديلها. هل تريد المتابعة؟")) {
+        db.cases[currentCaseIdx].sessions.splice(index, 1);
+        renderSessions();
+        window.scrollTo({ top: document.querySelector('.no-print').offsetTop, behavior: 'smooth' });
+    }
+}
+
+function deleteSession(sessionIndex) {
+    if (confirm("هل أنت متأكد من حذف هذه الجلسة نهائياً؟")) {
+        // حذف الجلسة من مصفوفة الجلسات داخل القضية الحالية
+        db.cases[currentCaseIdx].sessions.splice(sessionIndex, 1);
+        
+        // حفظ التغييرات في Firebase و LocalStorage
+        save();
+        
+        // إعادة عرض الجدول لتحديث البيانات أمامك
+        renderSessions();
+        
+        // تحديث الشاشة الرئيسية عشان لو الجلسة كانت ظاهرة في "جلسات اليوم" تختفي
+        updateDashboard();
+    }
+}
+
+        function uploadPDFAction() {
+            const file = document.getElementById('c_pdf_attachment').files[0];
+            if(!file) return alert("اختر ملف أولاً");
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const att = { name: file.name, date: new Date().toLocaleDateString('ar-EG'), data: e.target.result, type: file.type };
+                if(!db.cases[currentCaseIdx].attachments) db.cases[currentCaseIdx].attachments = [];
+                db.cases[currentCaseIdx].attachments.push(att); save(); renderPDFFiles();
+            };
+            reader.readAsDataURL(file);
+        }
+function save() {
+    if (dbRef) {
+        dbRef.set(db).then(() => {
+            console.log("Data saved to Firebase");
+            updateDashboard(); // لتحديث الشاشة الرئيسية فوراً
+        }).catch((error) => {
+            console.error("Firebase Save Error: ", error);
+        });
+    }
+    // حفظ نسخة احتياطية في المتصفح
+    localStorage.setItem('nasser_db', JSON.stringify(db));
+}
+
+        function renderPDFFiles() {
+            const atts = db.cases[currentCaseIdx].attachments || [];
+            const container = document.getElementById('pdf_links_container');
+            document.getElementById('pdf_table').style.display = atts.length ? 'table' : 'none';
+            container.innerHTML = atts.map((f, i) => `<tr><td>${f.name}</td><td>${f.date}</td><td><button onclick="viewAttachment(${i})">عرض</button></td></tr>`).join('');
+        }
+
+        function viewAttachment(i) {
+            const file = db.cases[currentCaseIdx].attachments[i];
+            const win = window.open();
+            win.document.write(`<iframe src="${file.data}" frameborder="0" style="width:100%;height:100vh;"></iframe>`);
+        }
+
+        function addNewSetting(cat, inputId) {
+            const val = document.getElementById(inputId).value;
+            if(val) { 
+                if(!db.sets[cat]) db.sets[cat] = [];
+                db.sets[cat].push(val); 
+                save(); 
+                fillSelects(); 
+                document.getElementById(inputId).value = '';
+                alert("تمت الإضافة بنجاح"); 
+            } else {
+                alert("الرجاء كتابة نص للإضافة");
+            }
+        }
+function addNewStaff() {
+    const name = document.getElementById('new_staff_name').value;
+    const pass = document.getElementById('new_staff_pass').value;
+    
+    if(!name || !pass) {
+        alert("من فضلك أدخل الاسم وكلمة السر");
+        return;
+    }
+
+    const permissions = [];
+    if(document.getElementById('p_view_cases').checked) permissions.push('رؤية القضايا');
+    if(document.getElementById('p_add_cases').checked) permissions.push('إضافة قضايا');
+    
+    const newUser = {
+        username: name,
+        password: pass,
+        role: 'staff',
+        permissions: permissions
+    };
+
+    if (!db.users) db.users = [];
+    db.users.push(newUser);
+    
+    save(); // التأكد من استخدام save() وليس saveDb()
+    renderStaffTable(); // تحديث الجدول فوراً بعد الإضافة
+    
+    // مسح الخانات بعد الإضافة
+    document.getElementById('new_staff_name').value = '';
+    document.getElementById('new_staff_pass').value = '';
+    alert("تم إضافة المساعد بنجاح");
+}
+function filterCasesByName() {
+    let filter = document.getElementById('case_search_input').value.toLowerCase();
+    let caseCards = document.getElementsByClassName('case-card-luxury');
+
+    for (let i = 0; i < caseCards.length; i++) {
+        // هنا نجعل البحث يركز فقط على القيمة التي حددناها (اسم الموكل ورقم القضية)
+        let searchData = caseCards[i].getAttribute('data-search').toLowerCase();
+        
+        if (searchData.includes(filter)) {
+            caseCards[i].style.display = ""; 
+        } else {
+            caseCards[i].style.display = "none"; 
+        }
+    }
+}
+
+function fillSelects() {
+    const f = (id, list) => {
+        const el = document.getElementById(id); if(!el) return;
+        el.innerHTML = '<option value="">-- اختر --</option>';
+        (list || []).forEach(i => el.innerHTML += `<option value="${i}">${i}</option>`);
+    };
+    
+    // ملء قوائم صفحة تسجيل القضايا
+    f('c_year', db.sets.years); f('c_type', db.sets.types); f('c_station', db.sets.stations);
+    
+    // ملء قوائم صفحة البحث الجديدة
+    f('s_year', db.sets.years); f('s_type', db.sets.types); f('s_station', db.sets.stations);
+
+    const defS = document.getElementById('c_def_list');
+    if(defS) {
+        defS.innerHTML = '';
+        (db.defs || []).forEach(d => defS.innerHTML += `<option value="${d.name}">${d.name}</option>`);
+    }
+}
+
+function advancedSearch() {
+    const num = document.getElementById('s_num').value.trim();
+    const year = document.getElementById('s_year').value;
+    const type = document.getElementById('s_type').value;
+    const station = document.getElementById('s_station').value;
+
+    if(!num || !year || !type || !station) {
+        alert("برجاء إكمال بيانات البحث الأربعة أولاً");
+        return;
+    }
+
+    // البحث عن القضية
+    const c = db.cases.find(item => 
+        String(item.num) === num && 
+        item.year === year && 
+        item.type === type && 
+        item.station === station
+    );
+
+    if (c) {
+        // السطر الأول: رقم القضية والسنة والنوع والجهة
+        document.getElementById('p_line1').innerText = `قضية رقم (${c.num}) لسنة (${c.year}) - ${c.type} - ${c.station}`;
+        
+        // السطر الثاني: الرقم الكلي
+        document.getElementById('p_line2').innerText = `الرقم الكلي / الاستئنافي: ${c.totalNum || "................"}`;
+        
+        // المتهم والخصم
+        document.getElementById('p_accused').innerText = c.def || "................";
+        document.getElementById('p_opponent').innerText = c.opponent || "................";
+        
+        // المحامي ووكيل النيابة (سحب تلقائي)
+        document.getElementById('p_lawyer').innerText = c.attorney_at_investigation || "................";
+        document.getElementById('p_prosecutor').innerText = c.prosecutorName || "................";
+        
+        // أضف هذا السطر داخل دالة advancedSearch بعد سطر جلب بيانات وكيل النيابة
+document.getElementById('p_notes_report').innerText = c.notes || "لا يوجد ملاحظات";
+
+// البحث عن الأحراز وعرضها كل واحد في سطر
+const evidencesArea = document.getElementById('p_evidences');
+if (c.evidences && c.evidences.length > 0) {
+    // نستخدم map لإنشاء div لكل حرز ونستخدم join لربطهم ببعض
+    evidencesArea.innerHTML = c.evidences.map((e, index) => 
+        `<div style="border-bottom: 1px dashed #ccc; padding: 2px 0;">- حرز رقم (${index + 1}): ${e.content}</div>`
+    ).join('');
+} else {
+    evidencesArea.innerHTML = "لا يوجد أحراز مسجلة";
+}
+
+// البحث عن الجلسات وعرضها في التقرير
+const tbody = document.getElementById('p_sessions_body');
+tbody.innerHTML = ""; 
+
+if (c.sessions && c.sessions.length > 0) {
+    c.sessions.forEach(s => {
+        tbody.innerHTML += `
+            <tr>
+                <td style="border: 1px solid #000;">${s.date || '-'}</td>
+                <td style="border: 1px solid #000;">${s.type || '-'}</td>
+                <td style="border: 1px solid #000;">${s.circle || '-'}</td>
+                <td style="border: 1px solid #000;">${s.res || '-'}</td>
+                <td style="border: 1px solid #000;">${s.verdict || '-'}</td>
+                <td style="border: 1px solid #000;">${s.next || '-'}</td> 
+            </tr>`;
+    });
+    
+} else {
+    tbody.innerHTML = "<tr><td colspan='6'>لا توجد جلسات مسجلة</td></tr>";
+}
+        
+        // إظهار الورقة
+        document.getElementById('search_result_modal').style.display = 'block';
+    } else {
+        alert("لم يتم العثور على قضية بهذه البيانات في السجلات.");
+    }
+}
+
+
+function generateEvidenceInputs() {
+    const count = document.getElementById('evidence_count').value;
+    const cont = document.getElementById('evidence_fields_container');
+    cont.innerHTML = ''; // تنظيف الحاوية
+    for(let i=1; i<=count; i++) {
+        cont.innerHTML += `<input type="text" class="evidence-input" placeholder="محتوى الحرز رقم ${i}" style="margin-bottom:5px;">`;
+    }
+}
+
+function clearAll() {
+    const checkPass = prompt("هذا الإجراء سيحذف كل أرشيف المكتب! أدخل كلمة سر المدير للتأكيد:");
+    if (checkPass === "123") { // كلمة سر المدير
+        if (confirm("هل أنت متأكد فعلاً؟ لا يمكن التراجع عن هذه الخطوة!")) {
+            db = { 
+                defs: [], 
+                cases: [], 
+                users: db.users, // الحفاظ على الموظفين لعدم قفل النظام
+                sets: { stations: [], types: [], years: [] } 
+            };
+            save();
+            location.reload();
+        }
+    } else {
+        alert("كلمة السر خاطئة، لا تملك صلاحية المسح الشامل.");
+    }
+}
+
+// وأيضاً استدعاء التحديث عند العودة للرئيسية
+function showPage(id) {
+    function showPage(id) {
+    if (currentUser && currentUser.role === 'staff') {
+        // فحص الصلاحيات بناءً على الأسماء المخزنة في المصفوفة
+        if (id === 'settings_page' || id === 'staff_management') {
+            alert("عذراً، هذه الصفحة للمدير فقط");
+            return;
+        }
+        
+        // مثال: إذا كانت الصفحة "قيد قضية" والمستخدم ليس لديه صلاحية "إضافة قضايا"
+        if (id === 'case_page' && !currentUser.permissions.includes('إضافة قضايا')) {
+            alert("ليس لديك صلاحية إضافة قضايا");
+            return;
+        }
+    }
+    // بقية الكود كما هو...
+}
+    // منع المساعد من دخول الإعدادات أو إدارة الموظفين حتى لو حاول برمجياً
+    if (currentUser && currentUser.role === 'staff') {
+        if (id === 'settings_page' || id === 'staff_management') {
+            alert("عذراً، هذه الصفحة للمدير فقط");
+            return;
+        }
+    }
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    const targetPage = document.getElementById(id);
+    if (targetPage) targetPage.classList.add('active-page');
+    
+    // تنفيذ وظائف التحديث الخاصة بكل صفحة
+    if (id === 'staff_management') renderStaffTable();
+    else if (id === 'main_dashboard') updateDashboard();
+    else if (id === 'all_cases_page') renderAllCases();
+    
+    window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+    // ضع هذه الوظائف داخل وسم <script>
+
+// 1. وظيفة لحفظ المساعد الجديد في الذاكرة
+
+
+
+// 2. وظيفة لعرض المساعدين في الجدول
+function renderStaffTable() {
+    const tbody = document.getElementById('staff_table_body');
+    if (!tbody) return;
+
+    let html = "";
+    // التأكد من وجود مستخدمين في قاعدة البيانات
+    if (db.users && db.users.length > 0) {
+        db.users.forEach((user, index) => {
+            html += `
+            <tr>
+                <td style="padding: 10px;">${user.username}</td>
+                <td>${user.permissions ? user.permissions.join(' | ') : 'لا توجد'}</td>
+                <td>
+                    <button onclick="deleteStaff(${index})" style="background:#ff4d4d; color:white; border:none; padding: 5px 10px; border-radius:3px; cursor:pointer;">حذف</button>
+                </td>
+            </tr>`;
+        });
+    } else {
+        html = "<tr><td colspan='3'>لا يوجد موظفين مسجلين حالياً</td></tr>";
+    }
+    tbody.innerHTML = html;
+}
+
+
+// 3. وظيفة لحذف مساعد
+function deleteStaff(index) {
+    if(confirm("هل أنت متأكد من حذف هذا المساعد؟")) {
+        db.users.splice(index, 1); // حذف المساعد من المصفوفة
+        save(); // استدعاء دالة الحفظ الصحيحة الخاصة بمنظومتك
+        renderStaffTable(); // تحديث الجدول فوراً
+        alert("تم حذف المساعد بنجاح");
+    }
+}
+// دالة تبديل الوضع الليلي
+function toggleDarkMode() {
+    const body = document.body;
+    body.classList.toggle('dark-mode');
+    
+    // حفظ التفضيل في LocalStorage
+    const isDark = body.classList.contains('dark-mode');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    
+    // تحديث نص الزر
+    updateDarkModeBtn();
+}
+
+// دالة لتحديث نص الزر وأيقونته
+function updateDarkModeBtn() {
+    const btn = document.getElementById('dark_mode_btn');
+    if (document.body.classList.contains('dark-mode')) {
+        btn.innerHTML = "☀️ الوضع النهاري";
+    } else {
+        btn.innerHTML = "🌙 الوضع الليلي";
+    }
+}
+
+// تشغيل الفحص عند تحميل الصفحة لتطبيق الوضع المفضل تلقائياً
+window.addEventListener('load', () => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+        updateDarkModeBtn();
+    }
+});
+let calendar; 
+
+function renderCalendar() {
+    const calendarEl = document.getElementById('calendar_container');
+    const events = [];
+    
+    // سحب الجلسات من القضايا المسجلة
+    (db.cases || []).forEach(c => {
+        (c.sessions || []).forEach(s => {
+            if (s.date) {
+                events.push({
+                    title: `قضية ${c.num} - ${c.type}`,
+                    start: s.date,
+                    extendedProps: { caseIdx: db.cases.indexOf(c) },
+                    backgroundColor: s.res === 'تأجيل' ? '#c29751' : '#0d1b2a',
+                    borderColor: '#fff'
+                });
+            }
+        });
+    });
+
+    if (calendar) calendar.destroy();
+    
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ar',
+        direction: 'rtl',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,listMonth'
+        },
+        events: events,
+        eventClick: function(info) {
+            openFile(info.event.extendedProps.caseIdx);
+        }
+    });
+    
+    // تأخير بسيط لضمان ظهور الأبعاد بشكل صحيح
+    setTimeout(() => { calendar.render(); }, 200);
+}
+function displayFullCaseView(caseData) {
+    // 1. العنوان الرئيسي
+    document.getElementById('case_header_title').innerText = 
+        `بيانات القضية ( رقم: ${caseData.num} ، سنة: ${caseData.year} ، النوع: ${caseData.type} ، الجهة: ${caseData.location} )`;
+
+    // 2. البيانات الثابتة
+    document.getElementById('view_accused').innerText = caseData.accused || "غير مسجل";
+    document.getElementById('view_charge').innerText = caseData.charge || "غير مسجل";
+    document.getElementById('view_opponent').innerText = caseData.opponent || "غير مسجل";
+    document.getElementById('view_evidence').innerText = caseData.evidence || "لا يوجد";
+    document.getElementById('view_lawyer').innerText = caseData.investigationLawyer || "غير مسجل";
+    document.getElementById('view_prosecutor').innerText = caseData.prosecutorName || "غير مسجل";
+
+    // 3. جدول الجلسات
+    const sessionsBody = document.getElementById('view_sessions_list');
+    sessionsBody.innerHTML = "";
+    if (caseData.sessions && caseData.sessions.length > 0) {
+        caseData.sessions.forEach(s => {
+            sessionsBody.innerHTML += `
+                <tr>
+                    <td>${s.date || '-'}</td>
+                    <td>${s.procedure || '-'}</td>
+                    <td>${s.circle || '-'}</td>
+                    <td>${s.res || '-'}</td>
+                    <td>${s.pronouncement || '-'}</td>
+                    <td>${s.nextDate || '-'}</td>
+                    <td>${s.notes || '-'}</td>
+                </tr>`;
+        });
+    } else {
+        sessionsBody.innerHTML = "<tr><td colspan='7'>لا توجد جلسات مسجلة</td></tr>";
+    }
+
+    // 4. إظهار النافذة
+    document.getElementById('search_result_modal').style.display = 'block';
+}
+
+function closeSearchResult() {
+    document.getElementById('search_result_modal').style.display = 'none';
+}
+    // إخفاء شاشة التحميل بعد ثانيتين (2000 مللي ثانية)
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash_screen');
+        splash.classList.add('fade-out');
+        // حذف العنصر تماماً من الصفحة بعد الاختفاء
+        setTimeout(() => splash.remove(), 500);
+    }, 2000); 
+});
+
+    </script>
+<div id="search_result_modal" class="modal-overlay">
+    <div class="no-print" style="text-align: center; padding: 20px;">
+        <button class="btn-nav" style="background:#27ae60; border-radius: 25px;" onclick="window.print()">
+            <i class="fas fa-print"></i> طـبـاعة التقرير
+        </button>
+        <button class="btn-nav" style="background:#e63946; border-radius: 25px;" onclick="closeSearchResult()">
+            <i class="fas fa-times"></i> إغلاق
+        </button>
+    </div>
+
+    <div class="a4-paper" style="border: 3px solid #0d1b2a; padding: 40px; background: white; min-height: 297mm; position: relative; font-family: 'Amiri', serif; color: #000; direction: rtl;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; border-bottom: 2px solid #0d1b2a; padding-bottom: 10px;">
+            <div style="text-align: right; width: 30%;">
+                <i class="fas fa-balance-scale" style="font-size: 60px; color: #0d1b2a;"></i>
+            </div>
+            <div style="width: 20%;"></div> <div style="text-align: left; width: 50%;">
+                <h2 style="margin: 0; font-size: 22px;">الأستاذ ناصر حسانين الجندي</h2>
+                <p style="margin: 5px 0; font-size: 16px; font-weight: bold;">المحامي بالنقض والإدارية والدستورية العليا</p>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h3 id="p_line1" style="font-size: 18px; margin: 10px 0; background: #f5f5f5; padding: 5px;"></h3>
+            <h4 id="p_line2" style="font-size: 17px; margin: 10px 0;"></h4>
+        </div>
+
+        <div style="margin-bottom: 15px; font-size: 13px; line-height: 2;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee;">
+                <span><b>المتهم:</b> <span id="p_accused"></span></span>
+                <span><b>الخصم:</b> <span id="p_opponent"></span></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee;">
+                <span><b>المحامي حاضر التحقيق:</b> <span id="p_lawyer"></span></span>
+                <span><b>وكيل النيابة:</b> <span id="p_prosecutor"></span></span>
+            </div>
+            
+  <div style="margin-top: 10px;">
+    <b style="display: block; border-bottom: 1px solid #0d1b2a; margin-bottom: 5px;">📦 قائمة الأحراز المرفقة:</b>
+    <div id="p_evidences" style="padding-right: 20px; line-height: 1.6;">
+        </div>
+      
+</div>
+
+        </div>
+<div style="border-bottom: 1px solid #eee;"><b>الملاحظات:</b> <span id="p_notes_report"></span></div>
+        <hr style="border: 1px solid #0d1b2a; margin: 10px 0;">
+
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+                <tr style="background: #0d1b2a; color: white;">
+                    <th style="border: 1px solid #000; padding: 8px;">التاريخ</th>
+                    <th style="border: 1px solid #000; padding: 8px;">نوع الجلسة</th>
+                    <th style="border: 1px solid #000; padding: 8px;">الدائرة</th>
+                    <th style="border: 1px solid #000; padding: 8px;">القرار</th>
+                    <th style="border: 1px solid #000; padding: 8px;">التفاصيل</th>
+                    <th style="border: 1px solid #000; padding: 8px;">النتيجة</th>
+                </tr>
+            </thead>
+            <tbody id="p_sessions_body" style="text-align: center;"></tbody>
+        </table>
+
+<div style="margin-top: 50px; display: flex; justify-content: space-between; page-break-inside: avoid;">
+    <div style="text-align: center; border-top: 1px solid #000; width: 150px; padding-top: 5px;">توقيع المحامي</div>
+    <div style="text-align: center; border-top: 1px solid #000; width: 150px; padding-top: 5px;">ختم المكتب</div>
+</div>
+
+
+</div>
+</body>
+</html>
