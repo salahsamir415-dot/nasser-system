@@ -1467,5 +1467,14 @@ window.addEventListener('load', () => {
 
 
 </div>
+    <script>
+  // الأمر ده هيجبر البرنامج يحفظ البيانات أوفلاين أول ما يفتح
+  setTimeout(() => {
+    if (typeof firebase !== 'undefined') {
+      firebase.database().enablePersistence().catch(err => console.log(err));
+    }
+  }, 2000);
+    </script>
+    
 </body>
 </html>
