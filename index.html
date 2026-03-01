@@ -791,6 +791,7 @@ function saveCase() {
 function renderAllCases() {
     let h = '';
     (db.cases || []).forEach((c, i) => {
+        if (c.status === "archived") return;
         // أضفنا هنا data-search لكي نحصر البحث فيها
         h += `<div class="case-card-luxury" data-search="${c.def} ${c.num}">
             <h4>⚖️ قضية رقم ${c.num} لسنة ${c.year} - ${c.type}</h4>
