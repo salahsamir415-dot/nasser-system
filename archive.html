@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>أرشيف القضايا المنتهية - منظومة الناصر</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&family=Tajawal&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        :root { --primary: #0d1b2a; --gold: #e0e1dd; --bg: #1b263b; }
+        body { font-family: 'Tajawal', sans-serif; background-color: var(--primary); color: white; margin: 0; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 20px; }
+        .archive-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .case-card-archive { background: var(--bg); border: 1px solid var(--gold); padding: 15px; border-radius: 10px; position: relative; }
+        .case-card-archive h4 { margin: 0 0 10px 0; color: #f39c12; }
+        .btn-restore { background: #27ae60; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-family: 'Tajawal'; }
+        .search-box { width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 5px; border: none; font-family: 'Tajawal'; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1><i class="fas fa-box-archive"></i> أرشيف القضايا المنتهية</h1>
+    <p>مكتب الأستاذ ناصر - المحامي بالنقض</p>
+</div>
+
+<input type="text" class="search-box" id="archiveSearch" placeholder="بحث في الأرشيف برقم القضية أو اسم الموكل..." onkeyup="filterArchive()">
+
+<div class="archive-container" id="archive_list">
+    </div>
+
+<script>
+    // 1. إعدادات Firebase (انسخ نفس الإعدادات من ملفك الأصلي هنا)
+    const firebaseConfig = {
+        // ضعه هنا (نفس اللي في ملفك الأصلي)
+    };
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const dbRef = firebase.database().ref('cases');
+
+    // 2. جلب البيانات وعرض المؤرشف فقط
+    function loadArchive() {
+        dbRef.on('value', (snapshot) => {
+            const cases = snapshot.val() || [];
+            let h = '';
+            cases.forEach((c, i) => {
+                if (c && c.status === "archived") {
+                    h += `<div class="case-card-archive" data-info="${c.def} ${c.num}">
+                        <h4>⚖️ قضية ${c.num} لسنة ${c.year}</h4>
+                        <p><b>الموكل:</b> ${c.def}</p>
+                        <p><small>تاريخ الأرشفة: ${c.archivedAt ? new Date(c.archivedAt).toLocaleDateString('ar-EG') : 'غير مسجل'}</small></p>
+                        <button class="btn-restore" onclick="restoreCase(${i})"><i class="fas fa-undo"></i> استعادة للقضايا النشطة</button>
+                    </div>`;
+                }
+            });
+            document.getElementById('archive_list').innerHTML = h || "<p style='text-align:center;'>الأرشيف فارغ حالياً</p>";
+        });
+    }
+
+    // 3. دالة الاستعادة
+    function restoreCase(index) {
+        if (confirm("هل تريد إعادة هذه القضية للقائمة النشطة؟")) {
+            firebase.database().ref('cases/' + index).update({ status: "active" })
+            .then(() => alert("تمت الاستعادة بنجاح"));
+        }
+    }
+
+    // 4. بحث سريع في الأرشيف
+    function filterArchive() {
+        let term = document.getElementById('archiveSearch').value.toLowerCase();
+        document.querySelectorAll('.case-card-archive').forEach(card => {
+            card.style.display = card.getAttribute('data-info').toLowerCase().includes(term) ? 'block' : 'none';
+        });
+    }
+
+    loadArchive();
+</script>
+</body>
+</html>
