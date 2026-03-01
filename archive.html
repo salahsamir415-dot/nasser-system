@@ -31,10 +31,16 @@
     </div>
 
 <script>
-    // 1. إعدادات Firebase (انسخ نفس الإعدادات من ملفك الأصلي هنا)
-    const firebaseConfig = {
-        // ضعه هنا (نفس اللي في ملفك الأصلي)
-    };
+    // 1. إعدادات Firebase الخاصة بمنظومة الناصر
+const firebaseConfig = { 
+    databaseURL: "https://nasserlawfirm-f903f-default-rtdb.firebaseio.com/" 
+};
+
+// بدء الاتصال بقاعدة البيانات
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const dbRef = firebase.database().ref('nasser_data'); // الربط بنفس مسار البيانات الأصلي
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const dbRef = firebase.database().ref('cases');
 
