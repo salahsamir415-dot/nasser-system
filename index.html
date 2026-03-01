@@ -20,7 +20,6 @@
     0% { width: 0; }
     100% { width: 100%; }
 }
-
 #splash_screen.fade-out {
     opacity: 0;
     transition: opacity 0.5s ease;
@@ -36,7 +35,6 @@
     z-index: 99999; 
     overflow-y: auto; 
 }
-
 /* تنسيق ورقة A4 */
 .a4-paper {
     width: 210mm;
@@ -48,14 +46,15 @@
     position: relative;
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
-
 /* إعدادات الطباعة الشاملة */
 @media print {
     /* إخفاء كل شيء ما عدا محتوى الطباعة */
     body * {
         visibility: hidden;
     }
-    
+    <div style="text-align: center; margin-top: 20px;">
+    <img src="logo.png" alt="لوجو المنظومة" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+</div>
     #search_result_modal, #search_result_modal * {
         visibility: visible;
     }
