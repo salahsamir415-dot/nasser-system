@@ -1475,6 +1475,22 @@ window.addEventListener('load', () => {
       firebase.database().enablePersistence().catch(err => console.log(err));
     }
   }, 2000);
+        // دالة الأرشفة
+function archiveCase(index) {
+    if (!confirm("هل أنت متأكد من نقل هذه القضية إلى الأرشيف المنتهي؟")) return;
+
+    // تحديث الحالة في قاعدة البيانات
+    db.cases[index].status = "archived";
+    db.cases[index].archivedAt = new Date().toISOString(); // تسجيل تاريخ الأرشفة
+
+    // حفظ التعديل في Firebase
+    firebase.database().ref('cases').set(db.cases).then(() => {
+        alert("تم نقل القضية للأرشيف بنجاح");
+        renderAllCases(); // إعادة تحديث القائمة لإخفاء القضية
+    }).catch(err => {
+        alert("حدث خطأ أثناء الأرشفة: " + err.message);
+    });
+}
     </script>
     
 </body>
